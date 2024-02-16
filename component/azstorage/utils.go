@@ -46,6 +46,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -376,6 +377,18 @@ func parseMetadata(attr *internal.ObjAttr, metadata map[string]string) {
 		} else if strings.ToLower(k) == symlinkKey && v == "true" {
 			attr.Flags = internal.NewSymlinkBitMap()
 			attr.Mode = attr.Mode | os.ModeSymlink
+		} else if strings.ToLower(k) == modtimeKey && v != "" {
+			mTimeInt64, err := strconv.ParseInt(v, 10, 64)
+			if err != nil {
+				mTimeInt64 = int64(0)
+			}
+			attr.Mtime = time.Unix(0, mTimeInt64)
+		} else if strings.ToLower(k) == createtimeKey && v != "" {
+			bTimeInt64, err := strconv.ParseInt(v, 10, 64)
+			if err != nil {
+				bTimeInt64 = int64(0)
+			}
+			attr.Crtime = time.Unix(0, bTimeInt64)
 		}
 	}
 }
