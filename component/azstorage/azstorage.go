@@ -469,6 +469,7 @@ func (az *AzStorage) WriteFile(options internal.WriteFileOptions) (int, error) {
 		if ok {
 			// Deep copy the Metadata map
 			options.Metadata = cloneMap(attr.Metadata)
+			delete(options.Metadata, modtimeKey)
 		}
 	}
 	err := az.storage.Write(options)

@@ -60,6 +60,8 @@ import (
 const (
 	folderKey           = "hdi_isfolder"
 	symlinkKey          = "is_symlink"
+	modtimeKey          = "modtime"
+	createtimeKey       = "linux_btime"
 	max_context_timeout = 5
 )
 
