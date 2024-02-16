@@ -180,6 +180,7 @@ type AzStorageOptions struct {
 	DisableCompression      bool   `config:"disable-compression" yaml:"disable-compression"`
 	Telemetry               string `config:"telemetry" yaml:"telemetry"`
 	HonourACL               bool   `config:"honour-acl" yaml:"honour-acl"`
+	PreserveMetadata        bool   `config:"preserve-metadata" yaml:"preserve-metadata"`
 	CPKEnabled              bool   `config:"cpk-enabled" yaml:"cpk-enabled"`
 	CPKEncryptionKey        string `config:"cpk-encryption-key" yaml:"cpk-encryption-key"`
 	CPKEncryptionKeySha256  string `config:"cpk-encryption-key-sha256" yaml:"cpk-encryption-key-sha256"`
@@ -508,7 +509,7 @@ func ParseAndValidateConfig(az *AzStorage, opt AzStorageOptions) error {
 	log.Info("ParseAndValidateConfig : Retry Config: retry-count %d, max-timeout %d, backoff-time %d, max-delay %d",
 		az.stConfig.maxRetries, az.stConfig.maxTimeout, az.stConfig.backoffTime, az.stConfig.maxRetryDelay)
 
-	log.Info("ParseAndValidateConfig : Telemetry : %s, honour-ACL %v, disable-symlink %v", az.stConfig.telemetry, az.stConfig.honourACL, az.stConfig.disableSymlink)
+	log.Info("ParseAndValidateConfig : Telemetry : %s, honour-ACL %v, preserve-metadata %v, disable-symlink %v", az.stConfig.telemetry, az.stConfig.honourACL, az.stConfig.preserveMetadata, az.stConfig.disableSymlink)
 
 	return nil
 }
@@ -558,6 +559,12 @@ func ParseAndReadDynamicConfig(az *AzStorage, opt AzStorageOptions, reload bool)
 		az.stConfig.honourACL = opt.HonourACL
 	} else {
 		az.stConfig.honourACL = false
+	}
+
+	if config.IsSet(compName + ".preserve-metadata") {
+		az.stConfig.preserveMetadata = opt.PreserveMetadata
+	} else {
+		az.stConfig.preserveMetadata = false
 	}
 
 	if config.IsSet("attr_cache.no-symlinks") {

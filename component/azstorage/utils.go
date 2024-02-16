@@ -666,3 +666,14 @@ func removeLeadingSlashes(s string) string {
 	}
 	return s
 }
+
+func cloneMap(m map[string]string) map[string]string {
+	var newMap map[string]string
+	if m != nil {
+		newMap := make(map[string]string)
+		for k, v := range m {
+			newMap[k] = v
+		}
+	}
+	return newMap
+}

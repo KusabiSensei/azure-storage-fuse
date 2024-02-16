@@ -460,6 +460,17 @@ func (az *AzStorage) ReadInBuffer(options internal.ReadInBufferOptions) (length 
 }
 
 func (az *AzStorage) WriteFile(options internal.WriteFileOptions) (int, error) {
+	if az.stConfig.preserveMetadata {
+		ok := true
+		attr, err := az.storage.GetAttr(options.Handle.Path)
+		if err != nil {
+			ok = false
+		}
+		if ok {
+			// Deep copy the Metadata map
+			options.Metadata = cloneMap(attr.Metadata)
+		}
+	}
 	err := az.storage.Write(options)
 	return len(options.Data), err
 }
