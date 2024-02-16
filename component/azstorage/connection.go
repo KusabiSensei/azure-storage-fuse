@@ -77,9 +77,10 @@ type AzStorageConfig struct {
 	maxResultsForList  int32
 	disableCompression bool
 
-	telemetry      string
-	honourACL      bool
-	disableSymlink bool
+	telemetry        string
+	honourACL        bool
+	preserveMetadata bool
+	disableSymlink   bool
 
 	// CPK related config
 	cpkEnabled             bool
