@@ -83,6 +83,11 @@ type ObjAttr struct {
 	Metadata map[string]string // extra information to preserve
 }
 
+type ObjXAttr struct {
+	Name  string
+	Value string
+}
+
 // IsDir : Test blob is a directory or not
 func (attr *ObjAttr) IsDir() bool {
 	return attr.Flags.IsSet(PropFlagIsDir)

@@ -282,6 +282,13 @@ func (base *BaseComponent) GetAttr(options GetAttrOptions) (*ObjAttr, error) {
 	return &ObjAttr{}, nil
 }
 
+func (base *BaseComponent) ListXAttr(options ListXAttrOptions) ([]ObjXAttr, error) {
+	if base.next != nil {
+		return base.next.ListXAttr(options)
+	}
+	return nil, nil
+}
+
 func (base *BaseComponent) GetFileBlockOffsets(options GetFileBlockOffsetsOptions) (*common.BlockOffsetList, error) {
 	if base.next != nil {
 		return base.next.GetFileBlockOffsets(options)

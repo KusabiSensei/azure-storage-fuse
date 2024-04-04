@@ -317,9 +317,9 @@ func libfuse_init(conn *C.fuse_conn_info_t, cfg *C.fuse_config_t) (res unsafe.Po
 	conn.max_background = C.uint(fuseFS.maxFuseThreads)
 
 	// While reading a file let kernel do readahed for better perf
-	conn.max_readahead = (4 * 1024 * 1024)
-	conn.max_read = (1 * 1024 * 1024)
-	conn.max_write = (1 * 1024 * 1024)
+	conn.max_readahead = 4 * 1024 * 1024
+	conn.max_read = 1 * 1024 * 1024
+	conn.max_write = 1 * 1024 * 1024
 
 	// direct_io option is used to bypass the kernel cache. It disables the use of
 	// page cache (file content cache) in the kernel for the filesystem.
@@ -413,6 +413,48 @@ func libfuse_getattr(path *C.char, stbuf *C.stat_t, fi *C.fuse_file_info_t) C.in
 
 	// Populate stat
 	fuseFS.fillStat(attr, stbuf)
+	return 0
+}
+
+// libfuse_listxattr lists extended attributes of the path
+//
+//export libfuse_listxattr
+func libfuse_listxattr(path *C.char, list *C.char, size C.size_t) C.int {
+	name := trimFusePath(path)
+	name = common.NormalizeObjectName(name)
+	log.Trace("Libfuse::libfuse_listxattr : %s", name)
+	return -C.ENODATA
+}
+
+// libfuse_getxattr gets the extended attribute for the name
+//
+//export libfuse_getxattr
+func libfuse_getxattr(path *C.char, name *C.char, value *C.char, size C.size_t) C.int {
+	pathName := trimFusePath(path)
+	pathName = common.NormalizeObjectName(pathName)
+	log.Trace("Libfuse::libfuse_getxattr : %s, %s", pathName, name)
+	return -C.ENODATA
+}
+
+// libfuse_setxattr will set an extended attribute
+// At present it is a no-op
+//
+//export libfuse_setxattr
+func libfuse_setxattr(path *C.char, name *C.char, value *C.char, size C.size_t, flags C.int) C.int {
+	pathName := trimFusePath(path)
+	pathName = common.NormalizeObjectName(pathName)
+	log.Trace("Libfuse::libfuse_setxattr : %s, %s=>%s", pathName, name, value)
+	return -C.ENOTSUP
+}
+
+// libfuse_removexattr will remove an extended attribute
+// At present it is a no-op
+//
+//export libfuse_removexattr
+func libfuse_removexattr(path *C.char, name *C.char) C.int {
+	pathName := trimFusePath(path)
+	pathName = common.NormalizeObjectName(pathName)
+	log.Trace("Libfuse::libfuse_removexattr : %s, %s", pathName, name)
 	return 0
 }
 

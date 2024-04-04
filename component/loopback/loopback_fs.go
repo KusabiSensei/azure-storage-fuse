@@ -36,6 +36,7 @@ package loopback
 import (
 	"context"
 	"fmt"
+	"github.com/pkg/xattr"
 	"io"
 	"os"
 	"path/filepath"
@@ -419,6 +420,21 @@ func (lfs *LoopbackFS) CopyFromFile(options internal.CopyFromFileOptions) error 
 		return err
 	}
 	return nil
+}
+
+func (lfs *LoopbackFS) ListXAttr(options internal.ListXAttrOptions) ([]internal.ObjXAttr, error) {
+	log.Trace("LoopbackFS::ListXAttr : name=%s", options.Name)
+	path := filepath.Join(lfs.path, options.Name)
+	xattrs, err := xattr.List(path)
+	if err != nil {
+		log.Err("LoopbackFS::ListXAttr : error [%s]", err)
+		return nil, err
+	}
+	var objXattrs []internal.ObjXAttr
+	for _, s := range xattrs {
+		objXattrs = append(objXattrs, internal.ObjXAttr{Name: s})
+	}
+	return objXattrs, nil
 }
 
 func (lfs *LoopbackFS) GetAttr(options internal.GetAttrOptions) (*internal.ObjAttr, error) {

@@ -173,6 +173,10 @@ type GetAttrOptions struct {
 	RetrieveMetadata bool
 }
 
+type ListXAttrOptions struct {
+	Name string
+}
+
 type SetAttrOptions struct {
 	Name string
 	Attr *ObjAttr
