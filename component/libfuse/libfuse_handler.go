@@ -51,6 +51,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"strings"
 	"syscall"
 	"unsafe"
 
@@ -416,14 +417,49 @@ func libfuse_getattr(path *C.char, stbuf *C.stat_t, fi *C.fuse_file_info_t) C.in
 	return 0
 }
 
-// libfuse_listxattr lists extended attributes of the path
+// libfuse_listxattr lists extended attributes of the path.
+// When size is 0, we return a C.int that is large enough to hold the buffer,
+// as the caller will allocate the buffer based on the size.
+// If size is greater than zero, we will copy characters into the buffer up to the size,
+// but we still return the size as an int (to indicate that the buffer was not sufficient
+// size)
 //
 //export libfuse_listxattr
 func libfuse_listxattr(path *C.char, list *C.char, size C.size_t) C.int {
 	name := trimFusePath(path)
 	name = common.NormalizeObjectName(name)
 	log.Trace("Libfuse::libfuse_listxattr : %s", name)
-	return -C.ENODATA
+	xattrs, err := fuseFS.NextComponent().ListXAttr(internal.ListXAttrOptions{Name: name})
+	if err != nil {
+		if err == syscall.ENOENT {
+			return -C.ENOENT
+		} else if err == syscall.EACCES {
+			return -C.EACCES
+		} else {
+			return -C.EIO
+		}
+	}
+	bufferSize := 0
+	numberOfXAttrs := len(xattrs) // This is conveniently the number of NUL chars
+	bufferSize += numberOfXAttrs
+	for i, v := range xattrs {
+		bufferSize += len(v.Name)
+	}
+	// Handle the 0 size case first as it is most likely to be called first.
+	// We calculate the size of the buffer and return it
+	if size == C.size_t(0) {
+		return C.int(bufferSize)
+	}
+	// Now we can calculate the string to be returned, then copy it into the buffer
+	xAttrNames := make([]string, numberOfXAttrs)
+	for i, v := range xattrs {
+		xAttrNames[i] = v.Name
+	}
+	xAttrsString := strings.Join(xAttrNames, "\u0000")
+	cString := C.CString(xAttrsString)
+	defer C.free(cString)
+	C.strncpy(list, cString, size)
+	return C.int(bufferSize)
 }
 
 // libfuse_getxattr gets the extended attribute for the name
@@ -433,6 +469,16 @@ func libfuse_getxattr(path *C.char, name *C.char, value *C.char, size C.size_t) 
 	pathName := trimFusePath(path)
 	pathName = common.NormalizeObjectName(pathName)
 	log.Trace("Libfuse::libfuse_getxattr : %s, %s", pathName, name)
+	xattrs, err := fuseFS.NextComponent().GetXAttr(internal.GetXAttrOptions{Name: pathName, XAttrName: name})
+	if err != nil {
+		if err == syscall.ENOENT {
+			return -C.ENOENT
+		} else if err == syscall.EACCES {
+			return -C.EACCES
+		} else {
+			return -C.EIO
+		}
+	}
 	return -C.ENODATA
 }
 
@@ -444,6 +490,18 @@ func libfuse_setxattr(path *C.char, name *C.char, value *C.char, size C.size_t, 
 	pathName := trimFusePath(path)
 	pathName = common.NormalizeObjectName(pathName)
 	log.Trace("Libfuse::libfuse_setxattr : %s, %s=>%s", pathName, name, value)
+	// Parse flags using the <linux/xattr.h> definition
+	xattrValue, err := fuseFS.NextComponent().SetXAttr(internal.SetXAttrOptions{Name: pathName, XAttrName: name, Value: value, CreateOnly: (flags&0x1 == flags) && !(flags&0x2 == flags), ReplaceOnly: !(flags&0x1 == flags) && (flags&0x2 == flags)})
+	if err != nil {
+		if errors.Is(err, syscall.EEXIST) {
+			return -C.EEXIST
+		} else if errors.Is(err, syscall.ENODATA) {
+			return -C.ENODATA
+		} else {
+			return -C.EIO
+		}
+	}
+
 	return -C.ENOTSUP
 }
 
@@ -455,6 +513,14 @@ func libfuse_removexattr(path *C.char, name *C.char) C.int {
 	pathName := trimFusePath(path)
 	pathName = common.NormalizeObjectName(pathName)
 	log.Trace("Libfuse::libfuse_removexattr : %s, %s", pathName, name)
+	err := fuseFS.NextComponent().RemoveXAttr(internal.RemoveXAttrOptions{Name: pathName, XAttrName: name})
+	if err != nil {
+		if errors.Is(err, syscall.ENODATA) {
+			return -C.ENODATA
+		} else {
+			return -C.EIO
+		}
+	}
 	return 0
 }
 

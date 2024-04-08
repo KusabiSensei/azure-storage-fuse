@@ -298,6 +298,19 @@ func (suite *LoopbackFSTestSuite) TestListXAttr() {
 	assert.Empty(info)
 }
 
+func (suite *LoopbackFSTestSuite) TestGetXAttr() {
+	defer suite.cleanupTest()
+	assert := assert.New(suite.T())
+
+	xattrs, err := suite.lfs.GetXAttr()
+	assert.Nil(err)
+	info, err := xattr.Get(filepath.Join(testPath, fileLorem), "")
+	assert.Nil(err)
+
+	assert.Empty(xattrs)
+	assert.Empty(info)
+}
+
 func (suite *LoopbackFSTestSuite) TestStageAndCommitData() {
 	defer suite.cleanupTest()
 	assert := assert.New(suite.T())

@@ -177,6 +177,24 @@ type ListXAttrOptions struct {
 	Name string
 }
 
+type GetXAttrOptions struct {
+	Name      string
+	XAttrName string
+}
+
+type SetXAttrOptions struct {
+	Name        string
+	XAttrName   string
+	Value       string
+	CreateOnly  bool
+	ReplaceOnly bool
+}
+
+type RemoveXAttrOptions struct {
+	Name      string
+	XAttrName string
+}
+
 type SetAttrOptions struct {
 	Name string
 	Attr *ObjAttr

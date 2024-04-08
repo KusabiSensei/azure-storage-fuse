@@ -132,6 +132,9 @@ type Component interface {
 	SetAttr(SetAttrOptions) error
 
 	ListXAttr(ListXAttrOptions) ([]ObjXAttr, error)
+	GetXAttr(GetXAttrOptions) (ObjXAttr, error)
+	SetXAttr(SetXAttrOptions) (ObjXAttr, error)
+	RemoveXAttr(RemoveXAttrOptions) error
 
 	Chmod(ChmodOptions) error
 	Chown(ChownOptions) error
