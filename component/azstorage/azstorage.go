@@ -533,15 +533,15 @@ func (az *AzStorage) GetAttr(options internal.GetAttrOptions) (attr *internal.Ob
 	return az.storage.GetAttr(options.Name)
 }
 
-func (az *AzStorage) ListXAttr(options internal.ListXAttrOptions) ([]internal.ObjXattr, error) {
+func (az *AzStorage) ListXAttr(options internal.ListXAttrOptions) ([]internal.ObjXAttr, error) {
 	return az.storage.ListXAttr(options.Name)
 }
 
-func (az *AzStorage) GetXAttr(options internal.GetXAttrOptions) (*internal.ObjXattr, error) {
+func (az *AzStorage) GetXAttr(options internal.GetXAttrOptions) (*internal.ObjXAttr, error) {
 	return az.storage.GetXAttr(options.Name, options.XAttrName)
 }
 
-func (az *AzStorage) SetXAttr(options internal.SetXAttrOptions) (*internal.ObjXattr, error) {
+func (az *AzStorage) SetXAttr(options internal.SetXAttrOptions) (*internal.ObjXAttr, error) {
 	return az.storage.SetXAttr(options.Name, options.XAttrName, options.Value, options.CreateOnly, options.ReplaceOnly)
 }
 
