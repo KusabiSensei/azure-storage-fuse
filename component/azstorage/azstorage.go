@@ -259,7 +259,7 @@ func (az *AzStorage) ReadDir(options internal.ReadDirOptions) ([]*internal.ObjAt
 	}
 
 	path := formatListDirName(options.Name)
-	var iteration int = 0
+	var iteration = 0
 	var marker *string = nil
 	for {
 		new_list, new_marker, err := az.storage.List(path, marker, common.MaxDirListCount)
@@ -441,7 +441,7 @@ func (az *AzStorage) ReadInBuffer(options internal.ReadInBufferOptions) (length 
 		return 0, syscall.ERANGE
 	}
 
-	var dataLen int64 = int64(len(options.Data))
+	var dataLen = int64(len(options.Data))
 	if atomic.LoadInt64(&options.Handle.Size) < (options.Offset + int64(len(options.Data))) {
 		dataLen = options.Handle.Size - options.Offset
 	}
@@ -531,6 +531,22 @@ func (az *AzStorage) ReadLink(options internal.ReadLinkOptions) (string, error) 
 func (az *AzStorage) GetAttr(options internal.GetAttrOptions) (attr *internal.ObjAttr, err error) {
 	//log.Trace("AzStorage::GetAttr : Get attributes of file %s", name)
 	return az.storage.GetAttr(options.Name)
+}
+
+func (az *AzStorage) ListXAttr(options internal.ListXAttrOptions) ([]internal.ObjXattr, error) {
+	return az.storage.ListXAttr(options.Name)
+}
+
+func (az *AzStorage) GetXAttr(options internal.GetXAttrOptions) (*internal.ObjXattr, error) {
+	return az.storage.GetXAttr(options.Name, options.XAttrName)
+}
+
+func (az *AzStorage) SetXAttr(options internal.SetXAttrOptions) (*internal.ObjXattr, error) {
+	return az.storage.SetXAttr(options.Name, options.XAttrName, options.Value, options.CreateOnly, options.ReplaceOnly)
+}
+
+func (az *AzStorage) RemoveXAttr(options internal.RemoveXAttrOptions) error {
+	return az.storage.RemoveXAttr(options.Name, options.XAttrName)
 }
 
 func (az *AzStorage) Chmod(options internal.ChmodOptions) error {

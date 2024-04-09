@@ -553,6 +553,22 @@ func (bb *BlockBlob) GetAttr(name string) (attr *internal.ObjAttr, err error) {
 	return bb.getAttrUsingRest(name)
 }
 
+func (bb *BlockBlob) ListXAttr(path string) ([]internal.ObjXAttr, error) {
+	return nil, nil
+}
+
+func (bb *BlockBlob) GetXAttr(path string, xattrname string) (*internal.ObjXAttr, error) {
+	return nil, nil
+}
+
+func (bb *BlockBlob) SetXAttr(path string, xattrname string, value string, createOnly bool, updateOnly bool) (*internal.ObjXAttr, error) {
+	return nil, nil
+}
+
+func (bb *BlockBlob) RemoveXAttr(path string, xattrname string) error {
+	return nil
+}
+
 // List : Get a list of blobs matching the given prefix
 // This fetches the list using a marker so the caller code should handle marker logic
 // If count=0 - fetch max entries
