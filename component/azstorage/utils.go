@@ -393,6 +393,38 @@ func parseMetadata(attr *internal.ObjAttr, metadata map[string]string) {
 	}
 }
 
+// Parse Extended Attributes from the metadata. Dots are encoded as _2E_, other ASCII-7 control characters get their hex
+// encoding in string format (that is, a `?` is _3F_, a `~` is _7E_ etc.)
+func parseExtendedAttributes(metadata map[string]string) []internal.ObjXAttr {
+	xattrs := make([]internal.ObjXAttr, 0)
+	for k, v := range metadata {
+		if strings.Contains(k, "_xattr_") {
+			n := strings.TrimPrefix(k, "_xattr_")
+			n = strings.ReplaceAll(n, "_2E_", ".")
+			xattrs = append(xattrs, internal.ObjXAttr{Name: n, Value: v})
+		}
+	}
+	return xattrs
+}
+
+// Encode Extended Attribute names. This is due to the fact that Azure Storage Metadata requires the use of alphanumeric
+// ASCII-7 characters. Non-alphanumeric characters are encoded with underscores and the hexadecimal representation of the
+// rune in the ASCII-7 code page.
+func encodeExtendedAttributes(xattrs []internal.ObjXAttr) map[string]string {
+	metadata := make(map[string]string)
+	for _, xattr := range xattrs {
+		metadata[encodeXAttrName(xattr.Name)] = xattr.Value
+	}
+	return metadata
+}
+
+func encodeXAttrName(name string) string {
+	keyBuilder := strings.Builder{}
+	keyBuilder.WriteString("_xattr_")
+	keyBuilder.WriteString(strings.ReplaceAll(name, ".", "_2E_"))
+	return keyBuilder.String()
+}
+
 //    ----------- Content-type handling  ---------------
 
 // ContentTypeMap : Store file extension to content-type mapping

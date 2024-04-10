@@ -229,7 +229,7 @@ func (bb *BlockBlob) TestPipeline() error {
 		return nil
 	}
 
-	marker := (azblob.Marker{})
+	marker := azblob.Marker{}
 	listBlob, err := bb.Container.ListBlobsHierarchySegment(context.Background(), marker, "/",
 		azblob.ListBlobsSegmentOptions{MaxResults: 2,
 			Prefix: bb.Config.prefixPath,
@@ -554,18 +554,109 @@ func (bb *BlockBlob) GetAttr(name string) (attr *internal.ObjAttr, err error) {
 }
 
 func (bb *BlockBlob) ListXAttr(path string) ([]internal.ObjXAttr, error) {
-	return nil, nil
+	log.Trace("BlockBlob::ListXAttr : name %s", path)
+	var attr *internal.ObjAttr
+	var err error
+	if bb.Config.virtualDirectory {
+		attr, err = bb.getAttrUsingList(path)
+	} else {
+		attr, err = bb.getAttrUsingRest(path)
+	}
+	if err != nil {
+		return nil, err
+	}
+	xattrs := parseExtendedAttributes(attr.Metadata)
+	return xattrs, nil
 }
 
 func (bb *BlockBlob) GetXAttr(path string, xattrname string) (*internal.ObjXAttr, error) {
-	return nil, nil
+	log.Trace("BlockBlob::GetXAttr : name %s, xattrname %s", path, xattrname)
+	var attr *internal.ObjAttr
+	var err error
+	if bb.Config.virtualDirectory {
+		attr, err = bb.getAttrUsingList(path)
+	} else {
+		attr, err = bb.getAttrUsingRest(path)
+	}
+	if err != nil {
+		return nil, err
+	}
+	xattrs := parseExtendedAttributes(attr.Metadata)
+	for _, v := range xattrs {
+		if v.Name == xattrname {
+			return &v, nil
+		}
+	}
+	return nil, syscall.ENOENT
 }
 
 func (bb *BlockBlob) SetXAttr(path string, xattrname string, value string, createOnly bool, updateOnly bool) (*internal.ObjXAttr, error) {
-	return nil, nil
+	log.Trace("BlockBlob::SetXAttr : name %s, xattrname %s, value %s, createOnly %t, updateOnly %t", path, xattrname, value, createOnly, updateOnly)
+	if createOnly && updateOnly {
+		return nil, syscall.EINVAL
+	}
+	var attr *internal.ObjAttr
+	var xattr *internal.ObjXAttr
+	var err error
+	if bb.Config.virtualDirectory {
+		attr, err = bb.getAttrUsingList(path)
+	} else {
+		attr, err = bb.getAttrUsingRest(path)
+	}
+	if err != nil {
+		return nil, err
+	}
+	xattrs := parseExtendedAttributes(attr.Metadata)
+	exist, index := false, 0
+	for k, xattr := range xattrs {
+		if xattr.Name == xattrname && createOnly {
+			return nil, syscall.EEXIST
+		}
+		if xattr.Name == xattrname {
+			exist = true
+			index = k
+		}
+	}
+	if !exist && updateOnly {
+		return nil, syscall.ENODATA
+	}
+	if exist {
+		xattrs[index].Value = value
+	} else {
+		xattr = &internal.ObjXAttr{
+			Name:  xattrname,
+			Value: value,
+		}
+		xattrs = append(xattrs, *xattr)
+	}
+	updatedMetadata := encodeExtendedAttributes(xattrs)
+	blobURL := bb.Container.NewBlockBlobURL(filepath.Join(bb.Config.prefixPath, path))
+	_, err = blobURL.SetMetadata(context.Background(), updatedMetadata, bb.blobAccCond, bb.blobCPKOpt)
+	if err != nil {
+		return nil, err
+	}
+	return xattr, nil
 }
 
 func (bb *BlockBlob) RemoveXAttr(path string, xattrname string) error {
+	log.Trace("BlockBlob::RemoveXAttr : name %s, xattrname %s", path, xattrname)
+	var attr *internal.ObjAttr
+	var err error
+	if bb.Config.virtualDirectory {
+		attr, err = bb.getAttrUsingList(path)
+	} else {
+		attr, err = bb.getAttrUsingRest(path)
+	}
+	if err != nil {
+		return err
+	}
+	updatedMetadata := cloneMap(attr.Metadata)
+	delete(updatedMetadata, encodeXAttrName(xattrname))
+	blobURL := bb.Container.NewBlockBlobURL(filepath.Join(bb.Config.prefixPath, path))
+	_, err = blobURL.SetMetadata(context.Background(), updatedMetadata, bb.blobAccCond, bb.blobCPKOpt)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -693,7 +784,7 @@ func (bb *BlockBlob) List(prefix string, marker *string, count int32) ([]*intern
 // track the progress of download of blobs where every 100MB of data downloaded is being tracked. It also tracks the completion of download
 func trackDownload(name string, bytesTransferred int64, count int64, downloadPtr *int64) {
 	if bytesTransferred >= (*downloadPtr)*100*common.MbToBytes || bytesTransferred == count {
-		(*downloadPtr)++
+		*downloadPtr++
 		log.Debug("BlockBlob::trackDownload : Download: Blob = %v, Bytes transferred = %v, Size = %v", name, bytesTransferred, count)
 
 		// send the download progress as an event
@@ -708,7 +799,7 @@ func (bb *BlockBlob) ReadToFile(name string, offset int64, count int64, fi *os.F
 
 	blobURL := bb.Container.NewBlobURL(filepath.Join(bb.Config.prefixPath, name))
 
-	var downloadPtr *int64 = new(int64)
+	var downloadPtr = new(int64)
 	*downloadPtr = 1
 
 	if common.MonitorBfs() {
@@ -863,7 +954,7 @@ func (bb *BlockBlob) calculateBlockSize(name string, fileSize int64) (blockSize 
 // track the progress of upload of blobs where every 100MB of data uploaded is being tracked. It also tracks the completion of upload
 func trackUpload(name string, bytesTransferred int64, count int64, uploadPtr *int64) {
 	if bytesTransferred >= (*uploadPtr)*100*common.MbToBytes || bytesTransferred == count {
-		(*uploadPtr)++
+		*uploadPtr++
 		log.Debug("BlockBlob::trackUpload : Upload: Blob = %v, Bytes transferred = %v, Size = %v", name, bytesTransferred, count)
 
 		// send upload progress as event
@@ -879,7 +970,7 @@ func (bb *BlockBlob) WriteFromFile(name string, metadata map[string]string, fi *
 	blobURL := bb.Container.NewBlockBlobURL(filepath.Join(bb.Config.prefixPath, name))
 	defer log.TimeTrack(time.Now(), "BlockBlob::WriteFromFile", name)
 
-	var uploadPtr *int64 = new(int64)
+	var uploadPtr = new(int64)
 	*uploadPtr = 1
 
 	blockSize := bb.Config.blockSize
@@ -1033,7 +1124,7 @@ func (bb *BlockBlob) createNewBlocks(blockList *common.BlockOffsetList, offset, 
 	prevIndex := blockList.BlockList[len(blockList.BlockList)-1].EndIndex
 	numOfBlocks := int64(len(blockList.BlockList))
 	if blockSize == 0 {
-		blockSize = (16 * 1024 * 1024)
+		blockSize = 16 * 1024 * 1024
 		if math.Ceil((float64)(numOfBlocks)+(float64)(length)/(float64)(blockSize)) > azblob.BlockBlobMaxBlocks {
 			blockSize = int64(math.Ceil((float64)(length) / (float64)(azblob.BlockBlobMaxBlocks-numOfBlocks)))
 			if blockSize > azblob.BlockBlobMaxStageBlockBytes {
