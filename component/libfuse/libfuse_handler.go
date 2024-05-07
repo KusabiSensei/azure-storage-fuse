@@ -442,7 +442,7 @@ func libfuse_listxattr(path *C.char, list *C.char, size C.size_t) C.int {
 	bufferSize := 0
 	numberOfXAttrs := len(xattrs) // This is conveniently the number of NUL chars
 	bufferSize += numberOfXAttrs
-	for i, v := range xattrs {
+	for _, v := range xattrs {
 		bufferSize += len(v.Name)
 	}
 	// Handle the 0 size case first as it is most likely to be called first.
@@ -457,19 +457,20 @@ func libfuse_listxattr(path *C.char, list *C.char, size C.size_t) C.int {
 	}
 	xAttrsString := strings.Join(xAttrNames, "\u0000")
 	cString := C.CString(xAttrsString)
-	defer C.free(cString)
+	defer C.free(unsafe.Pointer(cString))
 	C.strncpy(list, cString, size)
 	return C.int(bufferSize)
 }
 
 // libfuse_getxattr gets the extended attribute for the name
+// At present, it is a no-op
 //
 //export libfuse_getxattr
 func libfuse_getxattr(path *C.char, name *C.char, value *C.char, size C.size_t) C.int {
 	pathName := trimFusePath(path)
 	pathName = common.NormalizeObjectName(pathName)
 	log.Trace("Libfuse::libfuse_getxattr : %s, %s", pathName, name)
-	xattrs, err := fuseFS.NextComponent().GetXAttr(internal.GetXAttrOptions{Name: pathName, XAttrName: name})
+	_, err := fuseFS.NextComponent().GetXAttr(internal.GetXAttrOptions{Name: pathName, XAttrName: C.GoString(name)})
 	if err != nil {
 		if err == syscall.ENOENT {
 			return -C.ENOENT
@@ -491,7 +492,7 @@ func libfuse_setxattr(path *C.char, name *C.char, value *C.char, size C.size_t, 
 	pathName = common.NormalizeObjectName(pathName)
 	log.Trace("Libfuse::libfuse_setxattr : %s, %s=>%s", pathName, name, value)
 	// Parse flags using the <linux/xattr.h> definition
-	xattrValue, err := fuseFS.NextComponent().SetXAttr(internal.SetXAttrOptions{Name: pathName, XAttrName: name, Value: value, CreateOnly: (flags&0x1 == flags) && !(flags&0x2 == flags), ReplaceOnly: !(flags&0x1 == flags) && (flags&0x2 == flags)})
+	_, err := fuseFS.NextComponent().SetXAttr(internal.SetXAttrOptions{Name: pathName, XAttrName: C.GoString(name), Value: C.GoString(value), CreateOnly: (flags&0x1 == flags) && !(flags&0x2 == flags), ReplaceOnly: !(flags&0x1 == flags) && (flags&0x2 == flags)})
 	if err != nil {
 		if errors.Is(err, syscall.EEXIST) {
 			return -C.EEXIST
@@ -513,7 +514,7 @@ func libfuse_removexattr(path *C.char, name *C.char) C.int {
 	pathName := trimFusePath(path)
 	pathName = common.NormalizeObjectName(pathName)
 	log.Trace("Libfuse::libfuse_removexattr : %s, %s", pathName, name)
-	err := fuseFS.NextComponent().RemoveXAttr(internal.RemoveXAttrOptions{Name: pathName, XAttrName: name})
+	err := fuseFS.NextComponent().RemoveXAttr(internal.RemoveXAttrOptions{Name: pathName, XAttrName: C.GoString(name)})
 	if err != nil {
 		if errors.Is(err, syscall.ENODATA) {
 			return -C.ENODATA
