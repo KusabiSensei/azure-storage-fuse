@@ -314,10 +314,10 @@ func (mr *MockComponentMockRecorder) GetFileBlockOffsets(arg0 interface{}) *gomo
 }
 
 // GetXAttr mocks base method.
-func (m *MockComponent) GetXAttr(arg0 internal.GetXAttrOptions) (*internal.ObjXAttr, error) {
+func (m *MockComponent) GetXAttr(arg0 GetXAttrOptions) (*ObjXAttr, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetXAttr", arg0)
-	ret0, _ := ret[0].(*internal.ObjXAttr)
+	ret0, _ := ret[0].(*ObjXAttr)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -343,10 +343,10 @@ func (mr *MockComponentMockRecorder) IsDirEmpty(arg0 interface{}) *gomock.Call {
 }
 
 // ListXAttr mocks base method.
-func (m *MockComponent) ListXAttr(arg0 internal.ListXAttrOptions) ([]internal.ObjXAttr, error) {
+func (m *MockComponent) ListXAttr(arg0 ListXAttrOptions) ([]ObjXAttr, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListXAttr", arg0)
-	ret0, _ := ret[0].([]internal.ObjXAttr)
+	ret0, _ := ret[0].([]ObjXAttr)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -528,7 +528,7 @@ func (mr *MockComponentMockRecorder) ReleaseFile(arg0 interface{}) *gomock.Call 
 }
 
 // RemoveXAttr mocks base method.
-func (m *MockComponent) RemoveXAttr(arg0 internal.RemoveXAttrOptions) error {
+func (m *MockComponent) RemoveXAttr(arg0 RemoveXAttrOptions) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RemoveXAttr", arg0)
 	ret0, _ := ret[0].(error)
@@ -608,10 +608,10 @@ func (mr *MockComponentMockRecorder) SetNextComponent(arg0 interface{}) *gomock.
 }
 
 // SetXAttr mocks base method.
-func (m *MockComponent) SetXAttr(arg0 internal.SetXAttrOptions) (*internal.ObjXAttr, error) {
+func (m *MockComponent) SetXAttr(arg0 SetXAttrOptions) (*ObjXAttr, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetXAttr", arg0)
-	ret0, _ := ret[0].(*internal.ObjXAttr)
+	ret0, _ := ret[0].(*ObjXAttr)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
