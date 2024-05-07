@@ -289,18 +289,18 @@ func (base *BaseComponent) ListXAttr(options ListXAttrOptions) ([]ObjXAttr, erro
 	return nil, nil
 }
 
-func (base *BaseComponent) GetXAttr(options GetXAttrOptions) (ObjXAttr, error) {
+func (base *BaseComponent) GetXAttr(options GetXAttrOptions) (*ObjXAttr, error) {
 	if base.next != nil {
 		return base.next.GetXAttr(options)
 	}
-	return ObjXAttr{}, nil
+	return &ObjXAttr{}, nil
 }
 
-func (base *BaseComponent) SetXAttr(options SetXAttrOptions) (ObjXAttr, error) {
+func (base *BaseComponent) SetXAttr(options SetXAttrOptions) (*ObjXAttr, error) {
 	if base.next != nil {
 		return base.next.SetXAttr(options)
 	}
-	return ObjXAttr{}, nil
+	return &ObjXAttr{}, nil
 }
 
 func (base *BaseComponent) RemoveXAttr(options RemoveXAttrOptions) error {
