@@ -393,14 +393,14 @@ func parseMetadata(attr *internal.ObjAttr, metadata map[string]string) {
 	}
 }
 
-// Parse Extended Attributes from the metadata. Dots are encoded as _2E_, other ASCII-7 control characters get their hex
-// encoding in string format (that is, a `?` is _3F_, a `~` is _7E_ etc.)
+// Parse Extended Attributes from the metadata. Dots are encoded as _2e_, other ASCII-7 control characters get their hex
+// encoding in string format (that is, a `?` is _3f_, a `~` is _7e_ etc.)
 func parseExtendedAttributes(metadata map[string]string) []internal.ObjXAttr {
 	xattrs := make([]internal.ObjXAttr, 0)
 	for k, v := range metadata {
 		if strings.Contains(k, "_xattr_") {
 			n := strings.TrimPrefix(k, "_xattr_")
-			n = strings.ReplaceAll(n, "_2E_", ".")
+			n = strings.ReplaceAll(n, "_2e_", ".")
 			xattrs = append(xattrs, internal.ObjXAttr{Name: n, Value: v})
 		}
 	}
@@ -413,7 +413,7 @@ func parseExtendedAttributes(metadata map[string]string) []internal.ObjXAttr {
 func encodeXAttrName(name string) string {
 	keyBuilder := strings.Builder{}
 	keyBuilder.WriteString("_xattr_")
-	keyBuilder.WriteString(strings.ReplaceAll(name, ".", "_2E_"))
+	keyBuilder.WriteString(strings.ReplaceAll(name, ".", "_2e_"))
 	return keyBuilder.String()
 }
 

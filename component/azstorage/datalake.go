@@ -487,6 +487,9 @@ func (dl *Datalake) SetXAttr(path string, xattrname string, value string, create
 		return nil, err
 	}
 	updatedMetadata := cloneMap(attr.Metadata)
+	if updatedMetadata == nil {
+		updatedMetadata = make(map[string]string)
+	}
 	xattrs := parseExtendedAttributes(attr.Metadata)
 	exist := false
 	for _, xattr := range xattrs {

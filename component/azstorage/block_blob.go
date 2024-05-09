@@ -607,6 +607,9 @@ func (bb *BlockBlob) SetXAttr(path string, xattrname string, value string, creat
 	}
 	xattrs := parseExtendedAttributes(attr.Metadata)
 	updatedMetadata := cloneMap(attr.Metadata)
+	if updatedMetadata == nil {
+		updatedMetadata = make(map[string]string)
+	}
 	exist := false
 	for _, xattr := range xattrs {
 		if xattr.Name == xattrname && createOnly {
