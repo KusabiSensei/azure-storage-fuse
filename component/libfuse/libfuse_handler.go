@@ -463,24 +463,35 @@ func libfuse_listxattr(path *C.char, list *C.char, size C.size_t) C.int {
 }
 
 // libfuse_getxattr gets the extended attribute for the name
-// At present, it is a no-op
 //
 //export libfuse_getxattr
 func libfuse_getxattr(path *C.char, name *C.char, value *C.char, size C.size_t) C.int {
 	pathName := trimFusePath(path)
 	pathName = common.NormalizeObjectName(pathName)
 	log.Trace("Libfuse::libfuse_getxattr : %s, %s", pathName, name)
-	_, err := fuseFS.NextComponent().GetXAttr(internal.GetXAttrOptions{Name: pathName, XAttrName: C.GoString(name)})
+	xattr, err := fuseFS.NextComponent().GetXAttr(internal.GetXAttrOptions{Name: pathName, XAttrName: C.GoString(name)})
 	if err != nil {
-		if err == syscall.ENOENT {
-			return -C.ENOENT
-		} else if err == syscall.EACCES {
-			return -C.EACCES
+		if err == syscall.ENODATA {
+			return -C.ENODATA
+		} else if err == syscall.ENOTSUP {
+			return -C.ENOTSUP
 		} else {
 			return -C.EIO
 		}
 	}
-	return -C.ENODATA
+	bufferSize := len(xattr.Value)
+	// Handle the 0 size case first as it is most likely to be called first.
+	// We calculate the size of the buffer and return it
+	if size == C.size_t(0) {
+		return C.int(bufferSize)
+	}
+	cString := C.CString(xattr.Value)
+	defer C.free(unsafe.Pointer(cString))
+	C.strncpy(value, cString, size)
+	if size < C.size_t(bufferSize) {
+		return -C.ERANGE
+	}
+	return C.int(bufferSize)
 }
 
 // libfuse_setxattr will set an extended attribute
@@ -502,12 +513,10 @@ func libfuse_setxattr(path *C.char, name *C.char, value *C.char, size C.size_t, 
 			return -C.EIO
 		}
 	}
-
-	return -C.ENOTSUP
+	return C.int(0)
 }
 
 // libfuse_removexattr will remove an extended attribute
-// At present it is a no-op
 //
 //export libfuse_removexattr
 func libfuse_removexattr(path *C.char, name *C.char) C.int {
