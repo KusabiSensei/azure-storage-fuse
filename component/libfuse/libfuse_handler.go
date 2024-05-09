@@ -495,7 +495,6 @@ func libfuse_getxattr(path *C.char, name *C.char, value *C.char, size C.size_t) 
 }
 
 // libfuse_setxattr will set an extended attribute
-// At present it is a no-op
 //
 //export libfuse_setxattr
 func libfuse_setxattr(path *C.char, name *C.char, value *C.char, size C.size_t, flags C.int) C.int {

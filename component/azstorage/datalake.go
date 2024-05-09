@@ -474,7 +474,7 @@ func (dl *Datalake) GetXAttr(path string, xattrname string) (*internal.ObjXAttr,
 			return &v, nil
 		}
 	}
-	return nil, syscall.ENOENT
+	return nil, syscall.ENODATA
 }
 
 func (dl *Datalake) SetXAttr(path string, xattrname string, value string, createOnly bool, updateOnly bool) (*internal.ObjXAttr, error) {
@@ -486,37 +486,27 @@ func (dl *Datalake) SetXAttr(path string, xattrname string, value string, create
 	if err != nil {
 		return nil, err
 	}
+	updatedMetadata := cloneMap(attr.Metadata)
 	xattrs := parseExtendedAttributes(attr.Metadata)
-	exist, index := false, 0
-	for k, xattr := range xattrs {
+	exist := false
+	for _, xattr := range xattrs {
 		if xattr.Name == xattrname && createOnly {
 			return nil, syscall.EEXIST
 		}
 		if xattr.Name == xattrname {
 			exist = true
-			index = k
 		}
 	}
 	if !exist && updateOnly {
 		return nil, syscall.ENODATA
 	}
-	var xattr *internal.ObjXAttr
-	if exist {
-		xattrs[index].Value = value
-	} else {
-		xattr = &internal.ObjXAttr{
-			Name:  xattrname,
-			Value: value,
-		}
-		xattrs = append(xattrs, *xattr)
-	}
-	updatedMetadata := encodeExtendedAttributes(xattrs)
+	updatedMetadata[encodeXAttrName(xattrname)] = value
 	blobURL := dl.BlockBlob.Container.NewBlockBlobURL(filepath.Join(dl.Config.prefixPath, path))
 	_, err = blobURL.SetMetadata(context.Background(), updatedMetadata, dl.BlockBlob.blobAccCond, dl.BlockBlob.blobCPKOpt)
 	if err != nil {
 		return nil, err
 	}
-	return xattr, nil
+	return &internal.ObjXAttr{Name: xattrname, Value: value}, nil
 }
 
 func (dl *Datalake) RemoveXAttr(path string, xattrname string) error {

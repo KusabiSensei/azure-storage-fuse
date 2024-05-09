@@ -407,17 +407,9 @@ func parseExtendedAttributes(metadata map[string]string) []internal.ObjXAttr {
 	return xattrs
 }
 
-// Encode Extended Attribute names. This is due to the fact that Azure Storage Metadata requires the use of alphanumeric
+// Encode Extended Attribute name. This is due to the fact that Azure Storage Metadata requires the use of alphanumeric
 // ASCII-7 characters. Non-alphanumeric characters are encoded with underscores and the hexadecimal representation of the
 // rune in the ASCII-7 code page.
-func encodeExtendedAttributes(xattrs []internal.ObjXAttr) map[string]string {
-	metadata := make(map[string]string)
-	for _, xattr := range xattrs {
-		metadata[encodeXAttrName(xattr.Name)] = xattr.Value
-	}
-	return metadata
-}
-
 func encodeXAttrName(name string) string {
 	keyBuilder := strings.Builder{}
 	keyBuilder.WriteString("_xattr_")

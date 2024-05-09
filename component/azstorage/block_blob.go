@@ -587,7 +587,7 @@ func (bb *BlockBlob) GetXAttr(path string, xattrname string) (*internal.ObjXAttr
 			return &v, nil
 		}
 	}
-	return nil, syscall.ENOENT
+	return nil, syscall.ENODATA
 }
 
 func (bb *BlockBlob) SetXAttr(path string, xattrname string, value string, createOnly bool, updateOnly bool) (*internal.ObjXAttr, error) {
@@ -596,7 +596,6 @@ func (bb *BlockBlob) SetXAttr(path string, xattrname string, value string, creat
 		return nil, syscall.EINVAL
 	}
 	var attr *internal.ObjAttr
-	var xattr *internal.ObjXAttr
 	var err error
 	if bb.Config.virtualDirectory {
 		attr, err = bb.getAttrUsingList(path)
@@ -607,35 +606,26 @@ func (bb *BlockBlob) SetXAttr(path string, xattrname string, value string, creat
 		return nil, err
 	}
 	xattrs := parseExtendedAttributes(attr.Metadata)
-	exist, index := false, 0
-	for k, xattr := range xattrs {
+	updatedMetadata := cloneMap(attr.Metadata)
+	exist := false
+	for _, xattr := range xattrs {
 		if xattr.Name == xattrname && createOnly {
 			return nil, syscall.EEXIST
 		}
 		if xattr.Name == xattrname {
 			exist = true
-			index = k
 		}
 	}
 	if !exist && updateOnly {
 		return nil, syscall.ENODATA
 	}
-	if exist {
-		xattrs[index].Value = value
-	} else {
-		xattr = &internal.ObjXAttr{
-			Name:  xattrname,
-			Value: value,
-		}
-		xattrs = append(xattrs, *xattr)
-	}
-	updatedMetadata := encodeExtendedAttributes(xattrs)
+	updatedMetadata[encodeXAttrName(xattrname)] = value
 	blobURL := bb.Container.NewBlockBlobURL(filepath.Join(bb.Config.prefixPath, path))
 	_, err = blobURL.SetMetadata(context.Background(), updatedMetadata, bb.blobAccCond, bb.blobCPKOpt)
 	if err != nil {
 		return nil, err
 	}
-	return xattr, nil
+	return &internal.ObjXAttr{Name: xattrname, Value: value}, nil
 }
 
 func (bb *BlockBlob) RemoveXAttr(path string, xattrname string) error {
