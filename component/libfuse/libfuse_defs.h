@@ -155,12 +155,6 @@ static int native_flush_file(char *path, fuse_file_info_t *fi);
 // extern int libfuse_mknod(char *path, mode_t mode, dev_t dev);
 // extern int libfuse_link(char *from, char *to);
 //
-// We're going to attempt implementing these with fuse3
-// extern int libfuse_setxattr(char *path, char *name, char *value, size_t size, int flags);
-// extern int libfuse_getxattr(char *path, char *name, char *value, size_t size);
-// extern int libfuse_listxattr(char* path, char *list, size_t size);
-// extern int libfuse_removexattr(char *path, char *name);
-//
 // extern int libfuse_access(char *path, int mask);
 // extern int libfuse_lock
 // extern int libfuse_bmap
