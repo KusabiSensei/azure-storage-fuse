@@ -427,6 +427,7 @@ func (dl *Datalake) GetAttr(name string) (attr *internal.ObjAttr, err error) {
 		Flags:  internal.NewFileBitMap(),
 	}
 	parseProperties(attr, prop.XMsProperties())
+
 	if azbfs.PathResourceDirectory == azbfs.PathResourceType(prop.XMsResourceType()) {
 		attr.Flags = internal.NewDirBitMap()
 		attr.Mode = attr.Mode | os.ModeDir
@@ -449,6 +450,82 @@ func (dl *Datalake) GetAttr(name string) (attr *internal.ObjAttr, err error) {
 	}
 
 	return attr, nil
+}
+
+func (dl *Datalake) ListXAttr(path string) ([]internal.ObjXAttr, error) {
+	log.Trace("Datalake::ListXAttr : name %s", path)
+	attr, err := dl.GetAttr(path)
+	if err != nil {
+		return nil, err
+	}
+	xattrs := parseExtendedAttributes(attr.Metadata)
+	return xattrs, nil
+}
+
+func (dl *Datalake) GetXAttr(path string, xattrname string) (*internal.ObjXAttr, error) {
+	log.Trace("Datalake::GetXAttr : name %s, xattr %s", path, xattrname)
+	attr, err := dl.GetAttr(path)
+	if err != nil {
+		return nil, err
+	}
+	xattrs := parseExtendedAttributes(attr.Metadata)
+	for _, v := range xattrs {
+		if v.Name == xattrname {
+			return &v, nil
+		}
+	}
+	return nil, syscall.ENODATA
+}
+
+func (dl *Datalake) SetXAttr(path string, xattrname string, value string, createOnly bool, updateOnly bool) (*internal.ObjXAttr, error) {
+	log.Trace("Datalake::SetXAttr : name %s, xattr %s, value %s, createOnly %t, updateOnly %t", path, xattrname, value, createOnly, updateOnly)
+	if createOnly && updateOnly {
+		return nil, syscall.EINVAL
+	}
+	attr, err := dl.GetAttr(path)
+	if err != nil {
+		return nil, err
+	}
+	updatedMetadata := cloneMap(attr.Metadata)
+	if updatedMetadata == nil {
+		updatedMetadata = make(map[string]string)
+	}
+	xattrs := parseExtendedAttributes(attr.Metadata)
+	exist := false
+	for _, xattr := range xattrs {
+		if xattr.Name == xattrname && createOnly {
+			return nil, syscall.EEXIST
+		}
+		if xattr.Name == xattrname {
+			exist = true
+		}
+	}
+	if !exist && updateOnly {
+		return nil, syscall.ENODATA
+	}
+	updatedMetadata[encodeXAttrName(xattrname)] = value
+	blobURL := dl.BlockBlob.Container.NewBlockBlobURL(filepath.Join(dl.Config.prefixPath, path))
+	_, err = blobURL.SetMetadata(context.Background(), updatedMetadata, dl.BlockBlob.blobAccCond, dl.BlockBlob.blobCPKOpt)
+	if err != nil {
+		return nil, err
+	}
+	return &internal.ObjXAttr{Name: xattrname, Value: value}, nil
+}
+
+func (dl *Datalake) RemoveXAttr(path string, xattrname string) error {
+	log.Trace("Datalake::RemoveXAttr : name %s, xattr %s", path, xattrname)
+	attr, err := dl.GetAttr(path)
+	if err != nil {
+		return err
+	}
+	updatedMetadata := cloneMap(attr.Metadata)
+	delete(updatedMetadata, encodeXAttrName(xattrname))
+	blobURL := dl.BlockBlob.Container.NewBlockBlobURL(filepath.Join(dl.Config.prefixPath, path))
+	_, err = blobURL.SetMetadata(context.Background(), updatedMetadata, dl.BlockBlob.blobAccCond, dl.BlockBlob.blobCPKOpt)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // List : Get a list of path matching the given prefix

@@ -36,6 +36,7 @@ package loopback
 import (
 	"context"
 	"fmt"
+	"github.com/pkg/xattr"
 	"os"
 	"path/filepath"
 	"testing"
@@ -282,6 +283,32 @@ func (suite *LoopbackFSTestSuite) TestGetAttr() {
 	assert.Equal(attr.Name, info.Name())
 	assert.Equal(attr.Mode, info.Mode())
 	assert.Equal(attr.IsDir(), info.IsDir())
+}
+
+func (suite *LoopbackFSTestSuite) TestListXAttr() {
+	defer suite.cleanupTest()
+	assert := assert.New(suite.T())
+
+	xattrs, err := suite.lfs.ListXAttr(internal.ListXAttrOptions{Name: fileLorem})
+	assert.Nil(err)
+	info, err := xattr.List(filepath.Join(testPath, fileLorem))
+	assert.Nil(err)
+
+	assert.Empty(xattrs)
+	assert.Empty(info)
+}
+
+func (suite *LoopbackFSTestSuite) TestGetXAttr() {
+	defer suite.cleanupTest()
+	assert := assert.New(suite.T())
+
+	xattrs, err := suite.lfs.GetXAttr()
+	assert.Nil(err)
+	info, err := xattr.Get(filepath.Join(testPath, fileLorem), "")
+	assert.Nil(err)
+
+	assert.Empty(xattrs)
+	assert.Empty(info)
 }
 
 func (suite *LoopbackFSTestSuite) TestStageAndCommitData() {

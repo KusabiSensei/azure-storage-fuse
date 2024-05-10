@@ -36,6 +36,7 @@ package loopback
 import (
 	"context"
 	"fmt"
+	"github.com/pkg/xattr"
 	"io"
 	"os"
 	"path/filepath"
@@ -419,6 +420,59 @@ func (lfs *LoopbackFS) CopyFromFile(options internal.CopyFromFileOptions) error 
 		return err
 	}
 	return nil
+}
+
+func (lfs *LoopbackFS) ListXAttr(options internal.ListXAttrOptions) ([]internal.ObjXAttr, error) {
+	log.Trace("LoopbackFS::ListXAttr : name=%s", options.Name)
+	path := filepath.Join(lfs.path, options.Name)
+	xattrs, err := xattr.List(path)
+	if err != nil {
+		log.Err("LoopbackFS::ListXAttr : error [%s]", err)
+		return nil, err
+	}
+	var objXattrs []internal.ObjXAttr
+	for _, s := range xattrs {
+		objXattrs = append(objXattrs, internal.ObjXAttr{Name: s})
+	}
+	return objXattrs, nil
+}
+
+func (lfs *LoopbackFS) GetXAttr(options internal.GetXAttrOptions) (*internal.ObjXAttr, error) {
+	log.Trace("LoopbackFS::GetXAttr : name=%s, xattr=%s", options.Name, options.XAttrName)
+	path := filepath.Join(lfs.path, options.Name)
+	xattrValue, err := xattr.Get(path, options.XAttrName)
+	if err != nil {
+		log.Err("LoopbackFS::ListXAttr : error [%s]", err)
+		return nil, err
+	}
+	return &internal.ObjXAttr{Name: options.XAttrName, Value: string(xattrValue)}, nil
+}
+
+func (lfs *LoopbackFS) SetXAttr(options internal.SetXAttrOptions) (*internal.ObjXAttr, error) {
+	log.Trace("LoopbackFS::SetXAttr : name=%s, xattr=%s, value=%s", options.Name, options.XAttrName, options.Value)
+	flags := 0
+	if options.CreateOnly && options.ReplaceOnly {
+		return nil, syscall.EINVAL
+	}
+	if options.CreateOnly {
+		flags &= 0x1
+	}
+	if options.ReplaceOnly {
+		flags &= 0x2
+	}
+	err := xattr.SetWithFlags(options.Name, options.XAttrName, []byte(options.Value), flags)
+	if err != nil {
+		return nil, err
+	}
+	return &internal.ObjXAttr{
+		Name:  options.XAttrName,
+		Value: options.Value,
+	}, nil
+}
+
+func (lfs *LoopbackFS) RemoveXAttr(options internal.RemoveXAttrOptions) error {
+	log.Trace("LoopbackFS::RemoveXAttr : name=%s, xattr=%s", options.Name, options.XAttrName)
+	return xattr.Remove(filepath.Join(lfs.path, options.Name), options.XAttrName)
 }
 
 func (lfs *LoopbackFS) GetAttr(options internal.GetAttrOptions) (*internal.ObjAttr, error) {

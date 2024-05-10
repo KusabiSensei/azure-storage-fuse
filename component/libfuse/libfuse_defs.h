@@ -130,6 +130,10 @@ extern int libfuse2_utimens(char *path, timespec_t tv[2]);
 #else
 extern void *libfuse_init(fuse_conn_info_t *conn, fuse_config_t *cfg);
 extern int libfuse_getattr(char *path, stat_t *stbuf, fuse_file_info_t *fi);
+extern int libfuse_setxattr(char *path, char *name, char *value, size_t size, int flags);
+extern int libfuse_getxattr(char *path, char *name, char *value, size_t size);
+extern int libfuse_listxattr(char* path, char *list, size_t size);
+extern int libfuse_removexattr(char *path, char *name);
 extern int libfuse_readdir(char *path, void *buf, fuse_fill_dir_t filler, off_t, fuse_file_info_t *, fuse_readdir_flags_t);
 extern int libfuse_truncate(char *path, off_t off, fuse_file_info_t *fi);
 extern int libfuse_rename(char *src, char *dst, unsigned int flags);
@@ -150,10 +154,7 @@ static int native_flush_file(char *path, fuse_file_info_t *fi);
 
 // extern int libfuse_mknod(char *path, mode_t mode, dev_t dev);
 // extern int libfuse_link(char *from, char *to);
-// extern int libfuse_setxattr(char *path, char *name, char *value, size_t size, int flags);
-// extern int libfuse_getxattr(char *path, char *name, char *value, size_t size);
-// extern int libfuse_listxattr(char* path, char *list, size_t size);
-// extern int libfuse_removexattr(char *path, char *name);
+//
 // extern int libfuse_access(char *path, int mask);
 // extern int libfuse_lock
 // extern int libfuse_bmap

@@ -313,6 +313,21 @@ func (mr *MockComponentMockRecorder) GetFileBlockOffsets(arg0 interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFileBlockOffsets", reflect.TypeOf((*MockComponent)(nil).GetFileBlockOffsets), arg0)
 }
 
+// GetXAttr mocks base method.
+func (m *MockComponent) GetXAttr(arg0 GetXAttrOptions) (*ObjXAttr, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetXAttr", arg0)
+	ret0, _ := ret[0].(*ObjXAttr)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetXAttr indicates an expected call of GetXAttr.
+func (mr *MockComponentMockRecorder) GetXAttr(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetXAttr", reflect.TypeOf((*MockComponent)(nil).GetXAttr), arg0)
+}
+
 // IsDirEmpty mocks base method.
 func (m *MockComponent) IsDirEmpty(arg0 IsDirEmptyOptions) bool {
 	m.ctrl.T.Helper()
@@ -325,6 +340,21 @@ func (m *MockComponent) IsDirEmpty(arg0 IsDirEmptyOptions) bool {
 func (mr *MockComponentMockRecorder) IsDirEmpty(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsDirEmpty", reflect.TypeOf((*MockComponent)(nil).IsDirEmpty), arg0)
+}
+
+// ListXAttr mocks base method.
+func (m *MockComponent) ListXAttr(arg0 ListXAttrOptions) ([]ObjXAttr, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListXAttr", arg0)
+	ret0, _ := ret[0].([]ObjXAttr)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListXAttr indicates an expected call of ListXAttr.
+func (mr *MockComponentMockRecorder) ListXAttr(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListXAttr", reflect.TypeOf((*MockComponent)(nil).ListXAttr), arg0)
 }
 
 // Name mocks base method.
@@ -497,6 +527,20 @@ func (mr *MockComponentMockRecorder) ReleaseFile(arg0 interface{}) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReleaseFile", reflect.TypeOf((*MockComponent)(nil).ReleaseFile), arg0)
 }
 
+// RemoveXAttr mocks base method.
+func (m *MockComponent) RemoveXAttr(arg0 RemoveXAttrOptions) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveXAttr", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemoveXAttr indicates an expected call of RemoveXAttr.
+func (mr *MockComponentMockRecorder) RemoveXAttr(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveXAttr", reflect.TypeOf((*MockComponent)(nil).RemoveXAttr), arg0)
+}
+
 // RenameDir mocks base method.
 func (m *MockComponent) RenameDir(arg0 RenameDirOptions) error {
 	m.ctrl.T.Helper()
@@ -561,6 +605,21 @@ func (m *MockComponent) SetNextComponent(arg0 Component) {
 func (mr *MockComponentMockRecorder) SetNextComponent(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetNextComponent", reflect.TypeOf((*MockComponent)(nil).SetNextComponent), arg0)
+}
+
+// SetXAttr mocks base method.
+func (m *MockComponent) SetXAttr(arg0 SetXAttrOptions) (*ObjXAttr, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetXAttr", arg0)
+	ret0, _ := ret[0].(*ObjXAttr)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SetXAttr indicates an expected call of SetXAttr.
+func (mr *MockComponentMockRecorder) SetXAttr(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetXAttr", reflect.TypeOf((*MockComponent)(nil).SetXAttr), arg0)
 }
 
 // Start mocks base method.
